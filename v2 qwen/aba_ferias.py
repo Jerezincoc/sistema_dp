@@ -1,339 +1,223 @@
+# -*- coding: utf-8 -*-
+"""
+aba_folha.py
+============
+Aba para gestão de folha de pagamento: lançamentos e geração de recibo.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
-from datetime import timedelta
-import ferramentas
 import relatorios
+import ferramentas
 from componentes import FrameRubricas
 
 
-class AbaFerias(ttk.Frame):
-    """Aba para gestão de férias: aviso e recibo de pagamento."""
+class AbaFolha(ttk.Frame):
+    """Aba para gestão de folha de pagamento: lançamentos e geração de recibo."""
     
     def __init__(self, parent):
         super().__init__(parent)
         self.setup_ui()
-    
-    def setup_ui(self):
-        # --- BLOCO 1: DADOS DO FUNCIONÁRIO ---
-        frm_func = ttk.LabelFrame(self, text="Dados do Funcionário", padding=10)
-        frm_func.pack(fill=tk.X, padx=10, pady=5)
-        
-        ttk.Label(frm_func, text="Nome:").grid(row=0, column=0, sticky="w", pady=5)
-        self.ent_nome = ttk.Entry(frm_func, width=30)
-        self.ent_nome.grid(row=0, column=1, padx=5, sticky="w")
-        
-        ttk.Label(frm_func, text="Cargo:").grid(row=0, column=2, sticky="w", padx=10)
-        self.ent_cargo = ttk.Entry(frm_func, width=20)
-        self.ent_cargo.grid(row=0, column=3, padx=5, sticky="w")
-        
-        ttk.Label(frm_func, text="Admissão (Opcional):").grid(row=0, column=4, sticky="w", padx=10)
-        self.ent_adm = ttk.Entry(frm_func, width=12)
-        self.ent_adm.grid(row=0, column=5, padx=5, sticky="w")
-        self.ent_adm.bind("<KeyRelease>", lambda e: self._mascara_data(e, self.ent_adm))
-        self.ent_adm.insert(0, datetime.datetime.now().strftime("%d/%m/%Y"))
-        
-        ttk.Label(frm_func, text="Salário Base:").grid(row=1, column=0, sticky="w", pady=5)
-        self.ent_salario = ttk.Entry(frm_func, width=15)
-        self.ent_salario.grid(row=1, column=1, padx=5, sticky="w")
-        self.ent_salario.insert(0, "0.00")
-        
-        # --- BLOCO 2: DATAS E PERÍODOS ---
-        frm_dates = ttk.LabelFrame(self, text="Datas e Períodos", padding=10)
-        frm_dates.pack(fill=tk.X, padx=10, pady=5)
-        
-        ttk.Label(frm_dates, text="Período Aquisitivo (Opcional):").grid(row=0, column=0, sticky="w")
-        self.ent_aq_ini = ttk.Entry(frm_dates, width=11)
-        self.ent_aq_ini.grid(row=0, column=1, padx=5)
-        self.ent_aq_ini.bind("<KeyRelease>", lambda e: self._mascara_data(e, self.ent_aq_ini))
-        
-        ttk.Label(frm_dates, text="a").grid(row=0, column=2, padx=5)
-        
-        self.ent_aq_fim = ttk.Entry(frm_dates, width=11)
-        self.ent_aq_fim.grid(row=0, column=3, padx=5)
-        self.ent_aq_fim.bind("<KeyRelease>", lambda e: self._mascara_data(e, self.ent_aq_fim))
-        
-        ttk.Separator(frm_dates, orient='horizontal').grid(
-            row=1, column=0, columnspan=6, sticky="ew", pady=10
-        )
-        
-        ttk.Label(frm_dates, text="Início do Gozo:").grid(row=2, column=0, sticky="w", pady=5)
-        self.ent_gozo_ini = ttk.Entry(frm_dates, width=11)
-        self.ent_gozo_ini.grid(row=2, column=1, padx=5)
-        self.ent_gozo_ini.bind("<KeyRelease>", lambda e: self._mascara_data(e, self.ent_gozo_ini))
-        self.ent_gozo_ini.insert(0, datetime.datetime.now().strftime("%d/%m/%Y"))
-        
-        # Modo de cálculo
-        self.var_modo = tk.StringVar(value="dias")
-        ttk.Radiobutton(
-            frm_dates, text="Total por Dias", variable=self.var_modo, 
-            value="dias", command=self._alternar_modo
-        ).grid(row=2, column=2, padx=10)
-        ttk.Radiobutton(
-            frm_dates, text="Pela Data de Retorno", variable=self.var_modo, 
-            value="data", command=self._alternar_modo
-        ).grid(row=2, column=3, padx=10)
-        
-        ttk.Label(frm_dates, text="Total Dias (Gozo + Abono):").grid(row=3, column=0, sticky="w", pady=5)
-        self.ent_dias = ttk.Entry(frm_dates, width=8)
-        self.ent_dias.insert(0, "30")
-        self.ent_dias.grid(row=3, column=1, padx=5)
-        
-        ttk.Label(frm_dates, text="Data de Retorno:").grid(row=3, column=2, sticky="w", padx=10, pady=5)
-        self.ent_retorno = ttk.Entry(frm_dates, width=11)
-        self.ent_retorno.grid(row=3, column=3, padx=5)
-        self.ent_retorno.bind("<KeyRelease>", lambda e: self._mascara_data(e, self.ent_retorno))
-        
-        ttk.Button(
-            frm_dates, text="↻ Calcular Datas", 
-            command=self._calcular_datas_preview, style="Accent.TButton"
-        ).grid(row=3, column=4, padx=15)
-        
-        # --- EXTRAS: ABONO E DOBRA ---
-        frm_extras = ttk.Frame(frm_dates)
-        frm_extras.grid(row=4, column=0, columnspan=6, sticky="w", pady=15)
-        
-        self.var_abono = tk.BooleanVar()
-        ttk.Checkbutton(
-            frm_extras, text="Vender 1/3 (Abono Pecuniário)", 
-            variable=self.var_abono, command=self._calcular_datas_preview
-        ).pack(side="left", padx=5)
-        
-        self.var_dobra = tk.BooleanVar()
-        ttk.Checkbutton(
-            frm_extras, text="Pagar em Dobra (Art. 137 CLT)", 
-            variable=self.var_dobra
-        ).pack(side="left", padx=30)
-        
-        # --- BLOCO 3: MÉDIAS PARA BASE DE CÁLCULO ---
-        self.frm_medias = FrameRubricas(
-            self, "Médias para Base de Cálculo (Horas Extras, Adicionais...)", 
-            tipo_evento="provento"
-        )
-        self.frm_medias.pack(fill=tk.X, padx=10, pady=5)
-        
-        # --- BLOCO 4: BOTÕES DE AÇÃO ---
-        frm_btns = ttk.Frame(self)
-        frm_btns.pack(fill=tk.X, padx=80, pady=25)
-        
-        ttk.Button(
-            frm_btns, text="📄 GERAR AVISO DE FÉRIAS", 
-            command=self._acao_gerar_aviso, style="Accent.TButton"
-        ).pack(side="left", fill=tk.X, expand=True, padx=10, ipady=8)
-        
-        ttk.Button(
-            frm_btns, text="💰 GERAR RECIBO DE FÉRIAS", 
-            command=self._acao_gerar_recibo, style="Accent.TButton"
-        ).pack(side="left", fill=tk.X, expand=True, padx=10, ipady=8)
     
     def _mascara_data(self, event, campo):
         """Aplica máscara de data DD/MM/AAAA ao campo de entrada."""
         if event.keysym in ("BackSpace", "Delete", "Left", "Right", "Tab", "Escape"):
             return
         
-        # Remove caracteres não numéricos e limita a 8 dígitos
         texto = "".join(filter(str.isdigit, campo.get()))[:8]
         
-        # Formata com barras
         if len(texto) > 4:
             texto = f"{texto[:2]}/{texto[2:4]}/{texto[4:]}"
         elif len(texto) > 2:
             texto = f"{texto[:2]}/{texto[2:]}"
         
-        # Atualiza o campo sem disparar evento recursivo
         campo.delete(0, tk.END)
         campo.insert(0, texto)
     
-    def _alternar_modo(self):
-        """Habilita/desabilita campos conforme modo de cálculo."""
-        if self.var_modo.get() == "dias":
-            self.ent_dias.config(state="normal")
-            self.ent_retorno.config(state="readonly")
-        else:
-            self.ent_dias.config(state="readonly")
-            self.ent_retorno.config(state="normal")
-    
-    def _calcular_datas_preview(self):
-        """Calcula dias de gozo/abono e data de retorno com base no modo selecionado."""
-        data_ini = ferramentas.parse_data(self.ent_gozo_ini.get())
-        if not data_ini:
-            messagebox.showwarning("Atenção", "Informe uma data válida para início do gozo.")
-            return None
+    def setup_ui(self):
+        # --- BLOCO 1: DADOS DO CONTRATO ---
+        frm_topo = ttk.LabelFrame(self, text="Dados do Contrato", padding=10)
+        frm_topo.pack(fill=tk.X, padx=10, pady=5)
         
-        try:
-            if self.var_modo.get() == "dias":
-                total_dias = int(self.ent_dias.get())
-                if total_dias < 10 or total_dias > 30:
-                    messagebox.showwarning("Atenção", "Total de dias deve estar entre 10 e 30.")
-                    return None
-                
-                # Cálculo com abono pecuniário (1/3)
-                if self.var_abono.get():
-                    dias_gozo = int(total_dias * 2 / 3)
-                    dias_abono = total_dias - dias_gozo
-                else:
-                    dias_gozo = total_dias
-                    dias_abono = 0
-                
-                data_retorno = data_ini + timedelta(days=dias_gozo)
-                
-                # Atualiza campo de retorno (somente leitura)
-                self.ent_retorno.config(state="normal")
-                self.ent_retorno.delete(0, tk.END)
-                self.ent_retorno.insert(0, data_retorno.strftime("%d/%m/%Y"))
-                self.ent_retorno.config(state="readonly")
-                
-                return dias_gozo, dias_abono, data_retorno
-            
-            else:  # Modo "data"
-                data_retorno = ferramentas.parse_data(self.ent_retorno.get())
-                if not data_retorno or data_retorno <= data_ini:
-                    messagebox.showwarning("Atenção", "Data de retorno deve ser posterior ao início do gozo.")
-                    return None
-                
-                dias_gozo = (data_retorno - data_ini).days
-                if dias_gozo < 10:
-                    messagebox.showwarning("Atenção", "Período de gozo mínimo é de 10 dias.")
-                    return None
-                
-                # Cálculo com abono pecuniário
-                if self.var_abono.get():
-                    total_dias = int(dias_gozo / (2 / 3))
-                    dias_abono = total_dias - dias_gozo
-                else:
-                    total_dias = dias_gozo
-                    dias_abono = 0
-                
-                # Atualiza campo de dias (somente leitura)
-                self.ent_dias.config(state="normal")
-                self.ent_dias.delete(0, tk.END)
-                self.ent_dias.insert(0, str(total_dias))
-                self.ent_dias.config(state="readonly")
-                
-                return dias_gozo, dias_abono, data_retorno
+        # Linha 1: Nome, Admissão e Cargo
+        ttk.Label(frm_topo, text="Funcionário:").grid(row=0, column=0, sticky="w", pady=5)
+        self.ent_nome = ttk.Entry(frm_topo, width=30)
+        self.ent_nome.grid(row=0, column=1, sticky="w", padx=5)
         
-        except ValueError:
-            messagebox.showerror("Erro", "Valor numérico inválido nos campos de dias.")
-            return None
+        ttk.Label(frm_topo, text="Admissão:").grid(row=0, column=2, sticky="w", padx=10)
+        self.ent_admissao = ttk.Entry(frm_topo, width=10)
+        self.ent_admissao.grid(row=0, column=3, sticky="w", padx=5)
+        self.ent_admissao.bind("<KeyRelease>", lambda event: self._mascara_data(event, self.ent_admissao))
+        self.ent_admissao.insert(0, datetime.datetime.now().strftime("%d/%m/%Y"))
+        
+        ttk.Label(frm_topo, text="Cargo:").grid(row=0, column=4, sticky="w", padx=10)
+        self.ent_cargo = ttk.Entry(frm_topo, width=20)
+        self.ent_cargo.grid(row=0, column=5, sticky="w", padx=5)
+        
+        # Linha 2: Salário, Dias Trabalhados e Competência
+        ttk.Label(frm_topo, text="Salário Base:").grid(row=1, column=0, sticky="w", pady=5)
+        self.ent_salario = ttk.Entry(frm_topo, width=12)
+        self.ent_salario.grid(row=1, column=1, sticky="w", padx=5)
+        self.ent_salario.insert(0, "0.00")
+        
+        ttk.Label(frm_topo, text="Dias Trab.:").grid(row=1, column=2, sticky="w", padx=10)
+        self.ent_dias = ttk.Entry(frm_topo, width=5)
+        self.ent_dias.grid(row=1, column=3, sticky="w", padx=5)
+        self.ent_dias.insert(0, "30")
+        
+        ttk.Label(frm_topo, text="Competência:").grid(row=1, column=4, sticky="w", padx=10)
+        self.ent_comp = ttk.Entry(frm_topo, width=10)
+        self.ent_comp.grid(row=1, column=5, sticky="w", padx=5)
+        self.ent_comp.insert(0, datetime.datetime.now().strftime("%m/%Y"))
+        
+        # Linha 3: Tipo de Contrato (CLT vs Pro-labore)
+        self.var_tipo = tk.StringVar(value="CLT")
+        frm_radio = ttk.Frame(frm_topo)
+        frm_radio.grid(row=2, column=0, columnspan=6, pady=10, sticky="w")
+        
+        ttk.Radiobutton(
+            frm_radio, text="CLT (Padrão)", variable=self.var_tipo, 
+            value="CLT", command=self._ao_mudar_tipo
+        ).pack(side="left")
+        
+        ttk.Radiobutton(
+            frm_radio, text="Pro-Labore (Sócio)", variable=self.var_tipo, 
+            value="PRO", command=self._ao_mudar_tipo
+        ).pack(side="left", padx=15)
+        
+        # --- BLOCO 2: LANÇAMENTOS ---
+        self.frm_proventos = FrameRubricas(
+            self, "Proventos (Créditos)", tipo_evento="provento"
+        )
+        self.frm_proventos.pack(fill=tk.X, padx=10, pady=5)
+        
+        self.frm_descontos = FrameRubricas(
+            self, "Descontos (Débitos)", tipo_evento="desconto"
+        )
+        self.frm_descontos.pack(fill=tk.X, padx=10, pady=5)
+        
+        # --- BLOCO 3: BOTÕES DE AÇÃO ---
+        frm_botoes = ttk.Frame(self)
+        frm_botoes.pack(fill=tk.X, padx=50, pady=20)
+        
+        ttk.Button(
+            frm_botoes, text="🧹 Limpar Tudo", 
+            command=self._limpar_tela, style="Accent.TButton"
+        ).pack(side="left", fill=tk.X, expand=True, padx=5, ipady=5)
+        
+        ttk.Button(
+            frm_botoes, text="📄 GERAR RECIBO", 
+            command=self._gerar_recibo, style="Accent.TButton"
+        ).pack(side="left", fill=tk.X, expand=True, padx=5, ipady=5)
     
-    def _acao_gerar_aviso(self):
-        """Gera o aviso de férias com base nos dados preenchidos."""
-        res = self._calcular_datas_preview()
-        if not res:
+    def _ao_mudar_tipo(self):
+        """Atualiza os frames de rubricas conforme o tipo de contrato."""
+        tipo = self.var_tipo.get()
+        self.frm_proventos.mudar_tipo_contrato(tipo)
+        self.frm_descontos.mudar_tipo_contrato(tipo)
+    
+    def _limpar_tela(self):
+        """Limpa todos os campos da interface."""
+        self.ent_nome.delete(0, tk.END)
+        self.ent_cargo.delete(0, tk.END)
+        self.ent_salario.delete(0, tk.END)
+        self.ent_salario.insert(0, "0.00")
+        self.ent_dias.delete(0, tk.END)
+        self.ent_dias.insert(0, "30")
+        self.ent_admissao.delete(0, tk.END)
+        self.ent_admissao.insert(0, datetime.datetime.now().strftime("%d/%m/%Y"))
+        self.frm_proventos.limpar_tudo()
+        self.frm_proventos.add_linha()
+        self.frm_descontos.limpar_tudo()
+        self.frm_descontos.add_linha()
+    
+    def _gerar_recibo(self):
+        """Gera o recibo de pagamento com base nos dados preenchidos."""
+        nome = self.ent_nome.get().strip()
+        if not nome:
+            messagebox.showwarning("Atenção", "⚠️ Preencha o nome do funcionário.")
+            self.ent_nome.focus()
             return
         
-        dias_gozo, dias_abono, data_retorno = res
-        
-        dados_funcionario = {
-            "nome": self.ent_nome.get().strip() or "Não Informado",
-            "cargo": self.ent_cargo.get().strip() or "Não Informado"
-        }
-        
-        dados_ferias = {
-            "inicio": self.ent_gozo_ini.get(),
-            "fim": (data_retorno - timedelta(days=1)).strftime("%d/%m/%Y"),
-            "retorno": data_retorno.strftime("%d/%m/%Y"),
-            "obs": f"Com {dias_abono} dias de abono pecuniário." if dias_abono > 0 else "Sem abono pecuniário."
-        }
-        
         try:
-            relatorios.gerar_aviso_ferias(dados_funcionario, dados_ferias)
-        except Exception as e:
-            messagebox.showerror("Erro", f"Falha ao gerar aviso de férias:\n{str(e)}")
-    
-    def _acao_gerar_recibo(self):
-        """Gera o recibo de férias com cálculo detalhado das verbas."""
-        res = self._calcular_datas_preview()
-        if not res:
-            messagebox.showwarning("Atenção", "Verifique as datas de gozo antes de gerar o recibo.")
-            return
-        
-        dias_gozo, dias_abono, data_retorno = res
-        
-        # Validação do salário
-        try:
-            salario_base = ferramentas.str_para_float(self.ent_salario.get())
-            if salario_base <= 0:
-                messagebox.showwarning("Atenção", "Informe um salário base válido (maior que zero).")
+            salario_contratual = ferramentas.str_para_float(self.ent_salario.get())
+            if salario_contratual < 0:
+                messagebox.showerror("Erro", "❌ Salário não pode ser negativo.")
                 self.ent_salario.focus()
                 return
-        except:
-            messagebox.showwarning("Atenção", "Salário base inválido.")
+        except ValueError:
+            messagebox.showerror("Erro", "❌ Salário inválido. Use formato numérico (ex: 2500.50).")
             self.ent_salario.focus()
             return
         
-        # Cálculo das médias
-        medias = self.frm_medias.get_dados_calculados(salario_base)
-        base_calculo = salario_base + medias['total']
-        valor_dia = base_calculo / 30
+        try:
+            dias_trab = int(self.ent_dias.get())
+            if dias_trab < 0 or dias_trab > 31:
+                messagebox.showwarning("Atenção", "⚠️ Dias trabalhados deve estar entre 0 e 31.")
+                self.ent_dias.focus()
+                return
+        except ValueError:
+            dias_trab = 30
         
-        # Montagem dos itens do recibo
-        itens = []
+        salario_calculado = salario_contratual
+        desc_salario = "Salário Base"
         
-        # 1. Férias gozadas + 1/3 constitucional
-        valor_ferias = valor_dia * dias_gozo
-        valor_terco_ferias = valor_ferias / 3
-        itens.append({
-            'descricao': f"Férias Gozadas ({dias_gozo} dias)",
-            'ref': f"{dias_gozo}d",
-            'valor': valor_ferias,
+        if self.var_tipo.get() == "PRO":
+            desc_salario = "Pro-Labore"
+        
+        if dias_trab < 30 and salario_contratual > 0:
+            salario_calculado = (salario_contratual / 30) * dias_trab
+            desc_salario += f" ({dias_trab}/30 dias)"
+        
+        dados_prov = self.frm_proventos.get_dados_calculados(salario_contratual)
+        dados_desc = self.frm_descontos.get_dados_calculados(salario_contratual)
+        
+        itens_recibo = []
+        
+        itens_recibo.append({
+            'descricao': desc_salario,
+            'ref': f"{dias_trab}d",
+            'valor': salario_calculado,
             'desconto': 0.0
         })
-        itens.append({
-            'descricao': "1/3 Constitucional s/ Férias",
-            'ref': "33.33%",
-            'valor': valor_terco_ferias,
-            'desconto': 0.0
-        })
         
-        # 2. Dobra de férias (Art. 137 CLT)
-        if self.var_dobra.get():
-            itens.append({
-                'descricao': "Dobra de Férias (Art. 137 CLT)",
-                'ref': "100%",
-                'valor': valor_ferias,
-                'desconto': 0.0
-            })
-            itens.append({
-                'descricao': "1/3 s/ Dobra de Férias",
-                'ref': "33.33%",
-                'valor': valor_terco_ferias,
+        for desc, valor in dados_prov["itens"]:
+            itens_recibo.append({
+                'descricao': desc,
+                'ref': "-",
+                'valor': valor,
                 'desconto': 0.0
             })
         
-        # 3. Abono pecuniário + 1/3
-        if dias_abono > 0:
-            valor_abono = valor_dia * dias_abono
-            valor_terco_abono = valor_abono / 3
-            itens.append({
-                'descricao': f"Abono Pecuniário ({dias_abono} dias)",
-                'ref': f"{dias_abono}d",
-                'valor': valor_abono,
-                'desconto': 0.0
-            })
-            itens.append({
-                'descricao': "1/3 s/ Abono Pecuniário",
-                'ref': "33.33%",
-                'valor': valor_terco_abono,
-                'desconto': 0.0
+        for desc, valor in dados_desc["itens"]:
+            itens_recibo.append({
+                'descricao': desc,
+                'ref': "-",
+                'valor': 0.0,
+                'desconto': valor
             })
         
-        # Dados do funcionário para o recibo
-        dados_funcionario = {
-            "nome": self.ent_nome.get().strip() or "Não Informado",
-            "cargo": self.ent_cargo.get().strip() or "Não Informado",
-            "admissao": self.ent_adm.get().strip() or "Não Informado",
-            "aq_ini": self.ent_aq_ini.get().strip() or "...",
-            "aq_fim": self.ent_aq_fim.get().strip() or "...",
-            "gozo_ini": self.ent_gozo_ini.get().strip(),
-            "gozo_fim": (data_retorno - timedelta(days=1)).strftime("%d/%m/%Y"),
-            "dias_gozo": dias_gozo,
-            "dias_abono": dias_abono
+        cabecalho = {
+            "Competência": self.ent_comp.get().strip() or datetime.datetime.now().strftime("%m/%Y"),
+            "Cargo": self.ent_cargo.get().strip() or "Não Informado",
+            "CPF": "",
+            "Admissão": self.ent_admissao.get().strip() or "Não Informado",
+            "Salário Contratual": ferramentas.formatar_moeda(salario_contratual)
         }
         
         try:
-            relatorios.gerar_recibo_ferias_exclusivo(dados_funcionario, itens)
+            relatorios.gerar_recibo_html(
+                titulo_doc="Recibo de Pagamento",
+                tipo_arquivo="Folha",
+                nome_funcionario=nome,
+                dados_cabecalho=cabecalho,
+                tabela_itens=itens_recibo,
+                totais={}
+            )
         except Exception as e:
-            messagebox.showerror("Erro", f"Falha ao gerar recibo de férias:\n{str(e)}")
+            messagebox.showerror(
+                "Erro na Geração", 
+                f"❌ Falha ao gerar recibo:\n{str(e)}"
+            )
             import traceback
             traceback.print_exc()
