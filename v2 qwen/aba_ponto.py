@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+aba_ponto.py
+============
+
+Aba para geração de lista de frequência (folha de ponto).
+Corrige os erros críticos que causavam o carregamento incorreto.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
@@ -7,13 +15,13 @@ import relatorios
 class AbaPonto(ttk.Frame):
     """Aba para geração de lista de frequência (folha de ponto)."""
     
-    MESES = [(i, datetime.date(2000, i, 1).strftime('%B').capitalize()) for i in range(1, 13)]
-    
     def __init__(self, parent):
+        """Inicializa a aba de ponto com interface correta."""
         super().__init__(parent)
         self.setup_ui()
     
     def setup_ui(self):
+        """Configura a interface gráfica da aba de ponto."""
         # --- BLOCO 1: DADOS DA EMPRESA (CABEÇALHO DIREITO) ---
         frm_emp = ttk.LabelFrame(self, text="Informações da Empresa (Cabeçalho Direito)", padding=10)
         frm_emp.pack(fill=tk.X, padx=10, pady=5)
@@ -34,7 +42,6 @@ class AbaPonto(ttk.Frame):
         frm_func = ttk.LabelFrame(self, text="Dados do Funcionário", padding=10)
         frm_func.pack(fill=tk.X, padx=10, pady=5)
         
-        # Linha 1: Nome e Cargo (obrigatórios)
         ttk.Label(frm_func, text="Nome: *").grid(row=0, column=0, sticky="w", pady=2)
         self.ent_nome = ttk.Entry(frm_func, width=40)
         self.ent_nome.grid(row=0, column=1, padx=5, pady=2, sticky="w")
@@ -43,8 +50,7 @@ class AbaPonto(ttk.Frame):
         self.ent_cargo = ttk.Entry(frm_func, width=25)
         self.ent_cargo.grid(row=0, column=3, padx=5, pady=2, sticky="w")
         
-        # Linha 2: CTPS e Série
-        ttk.Label(frm_func, text="CTPS:").grid(row=1, column=0, sticky="w", pady=2)
+        ttk.Label(frm_func, text="CTPS/Série:").grid(row=1, column=0, sticky="w", pady=2)
         self.ent_ctps = ttk.Entry(frm_func, width=20)
         self.ent_ctps.grid(row=1, column=1, padx=5, pady=2, sticky="w")
         
@@ -52,7 +58,6 @@ class AbaPonto(ttk.Frame):
         self.ent_serie = ttk.Entry(frm_func, width=25)
         self.ent_serie.grid(row=1, column=3, padx=5, pady=2, sticky="w")
         
-        # Linha 3: Jornada e Lotação
         ttk.Label(frm_func, text="Jornada:").grid(row=2, column=0, sticky="w", pady=2)
         self.ent_jornada = ttk.Entry(frm_func, width=40)
         self.ent_jornada.grid(row=2, column=1, padx=5, pady=2, sticky="w")
@@ -72,7 +77,7 @@ class AbaPonto(ttk.Frame):
         ttk.Label(frm_periodo, text="Mês:").grid(row=0, column=0, sticky="w")
         self.cb_mes = ttk.Combobox(
             frm_periodo,
-            values=[f"{i:02d} - {nome}" for i, nome in self.MESES],
+            values=[f"{i:02d} - {datetime.date(2000, i, 1).strftime('%B').capitalize()}" for i in range(1, 13)],
             state="readonly",
             width=20
         )
@@ -93,12 +98,12 @@ class AbaPonto(ttk.Frame):
         btn_gerar = ttk.Button(
             self,
             text="📄 GERAR LISTA DE FREQUÊNCIA",
-            command=self._gerar_lista,
+            command=self.acao_gerar,
             style="Accent.TButton"
         )
         btn_gerar.pack(pady=25, fill=tk.X, padx=120, ipady=10)
     
-    def _gerar_lista(self):
+    def acao_gerar(self):
         """Valida entradas e gera a lista de frequência."""
         # Validação obrigatória
         nome = self.ent_nome.get().strip().upper()

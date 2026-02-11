@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+aba_folha.py
+============
+Aba para gestão de folha de pagamento: lançamentos e geração de recibo.
+"""
 import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
@@ -15,20 +21,16 @@ class AbaFolha(ttk.Frame):
     
     def _mascara_data(self, event, campo):
         """Aplica máscara de data DD/MM/AAAA ao campo de entrada."""
-        # Permitir teclas de navegação e edição
         if event.keysym in ("BackSpace", "Delete", "Left", "Right", "Tab", "Escape"):
             return
         
-        # Extrair apenas dígitos e limitar a 8 caracteres
         texto = "".join(filter(str.isdigit, campo.get()))[:8]
         
-        # Formatar com barras conforme digitação
         if len(texto) > 4:
             texto = f"{texto[:2]}/{texto[2:4]}/{texto[4:]}"
         elif len(texto) > 2:
             texto = f"{texto[:2]}/{texto[2:]}"
         
-        # Atualizar campo sem disparar evento recursivo
         campo.delete(0, tk.END)
         campo.insert(0, texto)
     
@@ -131,14 +133,12 @@ class AbaFolha(ttk.Frame):
     
     def _gerar_recibo(self):
         """Gera o recibo de pagamento com base nos dados preenchidos."""
-        # Validação do nome
         nome = self.ent_nome.get().strip()
         if not nome:
             messagebox.showwarning("Atenção", "⚠️ Preencha o nome do funcionário.")
             self.ent_nome.focus()
             return
         
-        # Validação do salário
         try:
             salario_contratual = ferramentas.str_para_float(self.ent_salario.get())
             if salario_contratual < 0:
@@ -150,7 +150,6 @@ class AbaFolha(ttk.Frame):
             self.ent_salario.focus()
             return
         
-        # Validação dos dias trabalhados
         try:
             dias_trab = int(self.ent_dias.get())
             if dias_trab < 0 or dias_trab > 31:
@@ -158,9 +157,8 @@ class AbaFolha(ttk.Frame):
                 self.ent_dias.focus()
                 return
         except ValueError:
-            dias_trab = 30  # Valor padrão seguro
+            dias_trab = 30
         
-        # Cálculo do salário proporcional (se aplicável)
         salario_calculado = salario_contratual
         desc_salario = "Salário Base"
         
@@ -171,14 +169,11 @@ class AbaFolha(ttk.Frame):
             salario_calculado = (salario_contratual / 30) * dias_trab
             desc_salario += f" ({dias_trab}/30 dias)"
         
-        # Coleta de rubricas
         dados_prov = self.frm_proventos.get_dados_calculados(salario_contratual)
         dados_desc = self.frm_descontos.get_dados_calculados(salario_contratual)
         
-        # Montagem dos itens do recibo (formato dict compatível com relatorios.py refatorado)
         itens_recibo = []
         
-        # Salário/Pro-labore (sempre incluído, mesmo zerado)
         itens_recibo.append({
             'descricao': desc_salario,
             'ref': f"{dias_trab}d",
@@ -186,7 +181,6 @@ class AbaFolha(ttk.Frame):
             'desconto': 0.0
         })
         
-        # Proventos
         for desc, valor in dados_prov["itens"]:
             itens_recibo.append({
                 'descricao': desc,
@@ -195,7 +189,6 @@ class AbaFolha(ttk.Frame):
                 'desconto': 0.0
             })
         
-        # Descontos
         for desc, valor in dados_desc["itens"]:
             itens_recibo.append({
                 'descricao': desc,
@@ -204,16 +197,14 @@ class AbaFolha(ttk.Frame):
                 'desconto': valor
             })
         
-        # Cabeçalho do recibo
         cabecalho = {
             "Competência": self.ent_comp.get().strip() or datetime.datetime.now().strftime("%m/%Y"),
             "Cargo": self.ent_cargo.get().strip() or "Não Informado",
-            "CPF": "",  # Pode ser expandido futuramente
+            "CPF": "",
             "Admissão": self.ent_admissao.get().strip() or "Não Informado",
             "Salário Contratual": ferramentas.formatar_moeda(salario_contratual)
         }
         
-        # Geração do recibo
         try:
             relatorios.gerar_recibo_html(
                 titulo_doc="Recibo de Pagamento",
