@@ -62,3 +62,19 @@ def criar_usuario(usuario, senha):
 def existe_usuario():
     # Como o Admin Mestre sempre existe no código, essa função sempre retorna True
     return True
+def listar_usuarios():
+    """Retorna uma lista com os nomes de todos os usuários comuns."""
+    dados = carregar_usuarios()
+    return list(dados.keys())
+
+def deletar_usuario(usuario):
+    """Remove um usuário do arquivo .bin"""
+    if usuario == ADMIN_MESTRE_USER:
+        return False, "O Administrador Mestre não pode ser removido."
+    
+    dados = carregar_usuarios()
+    if usuario in dados:
+        del dados[usuario]
+        salvar_usuarios(dados)
+        return True, f"Usuário {usuario} removido com sucesso."
+    return False, "Usuário não encontrado."

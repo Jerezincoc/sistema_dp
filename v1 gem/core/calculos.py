@@ -1,6 +1,6 @@
 # Arquivo: calculos.py
 from datetime import date
-import config # Importa as tabelas do nosso arquivo de configuração
+from core import config
 
 def calcular_inss_progressivo(salario_bruto):
     """

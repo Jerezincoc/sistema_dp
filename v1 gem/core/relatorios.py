@@ -4,7 +4,7 @@ import datetime
 import re
 import sys
 import pdfkit
-from ferramentas import formatar_moeda
+from core.ferramentas import formatar_moeda
 import calendar
 
 # =================================================================
@@ -49,7 +49,7 @@ import datetime
 import re
 import sys
 import pdfkit
-from ferramentas import formatar_moeda
+from core.ferramentas import formatar_moeda
 
 def obter_caminho_motor():
     if getattr(sys, 'frozen', False):
