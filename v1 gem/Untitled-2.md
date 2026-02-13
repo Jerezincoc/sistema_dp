@@ -19,16 +19,16 @@
     ├── 📁 scr
     │   ├── 📁 core
     │   │   ├── 🐍 __init__.py
-    │   │   ├── 🐍 auth.py
+    │   │   ├── ##🐍 auth.py
     │   │   ├── 🐍 config.py
-    │   │   ├── 🐍 database_manager.py
+    │   │   ├── ##🐍 database_manager.py
     │   │   ├── 🐍 logger.py
-    │   │   └── 🐍 session.py
+    │   │   └── ##🐍 session.py
     │   ├── 📁 models
     │   │   ├── 🐍 __init__.py
     │   │   ├── 🐍 calculation_model.py
-    │   │   ├── 🐍 employee_model.py
-    │   │   └── 🐍 user_model.py
+    │   │   ├── ##🐍 employee_model.py
+    │   │   └── ##🐍 user_model.py
     │   └── 📁 modules
     │       ├── 📁 fopag
     │       │   ├── 🐍 calc_folha.py
@@ -52,8 +52,8 @@
     │   │   ├── 🐍 aba_folha.py
     │   │   ├── 🐍 aba_por_fora.py
     │   │   ├── 🐍 aba_rescisao.py
-    │   │   ├── 🐍 dashboard.py
-    │   │   └── 🐍 login_screen.py
+    │   │   ├── ##🐍 dashboard.py
+    │   │   └── ##🐍 login_screen.py
     │   └── 📁 styles
     │       ├── 🐍 colors.py
     │       └── 🐍 theme_manager.py
