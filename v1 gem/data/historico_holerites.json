@@ -1,0 +1,72 @@
+{
+    "emp-001_02/2026": {
+        "employee_id": "emp-001",
+        "nome": "Joao da Silva",
+        "competencia": "02/2026",
+        "data_processamento": "2026-02-13T22:16:22.582797",
+        "tipo_contrato": "HIBRIDO",
+        "clt": {
+            "vencimentos": {
+                "salario_base": 6500.0,
+                "extras": 0.0,
+                "total_bruto": 6500.0
+            },
+            "descontos": {
+                "inss": 711.51,
+                "irrf": 410.54,
+                "total_descontos": 1122.05
+            },
+            "liquido": 5377.95
+        },
+        "extra": {
+            "vencimentos": {
+                "salario_base_extra": 2000.0,
+                "comissoes": 0.0,
+                "bonus": 0.0,
+                "total_bruto": 2000.0
+            },
+            "descontos": {
+                "adiantamentos": 0.0,
+                "outros_descontos": 0.0,
+                "total_descontos": 0.0
+            },
+            "liquido": 2000.0,
+            "saldo_devedor_proximo_mes": 0.0
+        }
+    },
+    "emp-001_": {
+        "employee_id": "emp-001",
+        "nome": "Joao da Silva",
+        "competencia": "",
+        "data_processamento": "2026-02-13T22:26:30.202043",
+        "tipo_contrato": "HIBRIDO",
+        "clt": {
+            "vencimentos": {
+                "salario_base": 6500.0,
+                "extras": 0.0,
+                "total_bruto": 6500.0
+            },
+            "descontos": {
+                "inss": 711.51,
+                "irrf": 410.54,
+                "total_descontos": 1122.05
+            },
+            "liquido": 5377.95
+        },
+        "extra": {
+            "vencimentos": {
+                "salario_base_extra": 2000.0,
+                "comissoes": 0.0,
+                "bonus": 0.0,
+                "total_bruto": 2000.0
+            },
+            "descontos": {
+                "adiantamentos": 0.0,
+                "outros_descontos": 0.0,
+                "total_descontos": 0.0
+            },
+            "liquido": 2000.0,
+            "saldo_devedor_proximo_mes": 0.0
+        }
+    }
+}

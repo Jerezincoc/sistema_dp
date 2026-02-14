@@ -10,24 +10,26 @@ import logging
 logger = logging.getLogger("v1_gem.database")
 
 class JsonDatabaseManager:
-    """
-    Gerenciador de persistência definitivo para a Fase 1 (JSON).
-    Implementa Singleton, Thread Safety e operações em lote (Batch).
-    """
     _instance = None
-    _lock = threading.Lock() # Trava global para o Singleton
+    _lock = threading.Lock()
     
-    def __new__(cls, data_dir: str = "data"):
+    def __new__(cls, data_dir: str = None):
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super(JsonDatabaseManager, cls).__new__(cls)
-                cls._instance._init_manager(data_dir)
+                
+                # CAMINHO ABSOLUTO FIXO PARA O SEU HD:
+                caminho_real = r"C:\Users\jerem\OneDrive\Documentos\APLICATIVO DP\sistema_dp\v1 gem\data"
+                
+                cls._instance._init_manager(caminho_real)
             return cls._instance
 
     def _init_manager(self, data_dir: str):
         self.data_dir = Path(data_dir)
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        # Travas individuais por tabela (arquivo) para permitir leitura/escrita simultânea em tabelas diferentes
+        # Garante que não vai criar pasta nova se ela já existir
+        if not self.data_dir.exists():
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+        
         self._table_locks: Dict[str, threading.Lock] = {}
 
     def _get_table_lock(self, table_name: str) -> threading.Lock:
